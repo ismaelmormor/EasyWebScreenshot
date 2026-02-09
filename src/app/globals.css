@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+}
+
+@theme {
+    --font-sans: 'Inter', sans-serif;
+    --color-slate-850: #151f32;
+    --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15);
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes sweep {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px)
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    }
+}
+
+/* Custom Utilities */
+.animate-spin-slow {
+    animation: spin 3s linear infinite;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Sidebar Scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 20px;
+}
+
+
+/* Details Animation */
+details[open] summary~* {
+    animation: sweep .3s ease-in-out;
+}
