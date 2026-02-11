@@ -15,8 +15,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { generateScreenshot } from '../actions';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
+    const router = useRouter();
     const [url, setUrl] = useState('https://apple.com');
     const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [isLoading, setIsLoading] = useState(false);
@@ -25,23 +28,56 @@ export default function LandingPage() {
         mobile: 'https://placehold.co/390x844/f1f5f9/94a3b8?text=Mobile+Preview'
     });
 
-    const handleCapture = () => {
+    const handleCapture = async () => {
         if (isLoading) return;
 
         setIsLoading(true);
 
-        // Simulate API Call
-        setTimeout(() => {
-            const encodedText = encodeURIComponent(url);
+        // Basic URL validation
+        let targetUrl = url;
+        if (!/^https?:\/\//i.test(targetUrl)) {
+            targetUrl = `https://${targetUrl}`;
+        }
 
-            setImgSrc({
-                desktop: `https://placehold.co/1920x1080/f1f5f9/1e293b?text=${encodedText}`,
-                mobile: `https://placehold.co/390x844/f1f5f9/1e293b?text=${encodedText}`
-            });
+        try {
+            const result = await generateScreenshot(targetUrl, device);
 
+            if (result.success && result.imageBase64) {
+                setImgSrc(prev => ({
+                    ...prev,
+                    [device]: result.imageBase64
+                }));
+            } else if (result.error === 'unauthorized') {
+                router.push('/login');
+            } else {
+                console.error(result.error);
+                alert(result.error || 'Failed to capture screenshot');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('An unexpected error occurred');
+        } finally {
             setIsLoading(false);
-        }, 2000);
+        }
     };
+
+    const handleDownload = (type: 'desktop' | 'mobile') => {
+        const imageToDownload = imgSrc[type];
+        if (!imageToDownload || imageToDownload.startsWith('https://placehold.co')) return;
+
+        try {
+            const link = document.createElement('a');
+            link.href = imageToDownload;
+            link.download = `screenshot-${type}-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to download image.');
+        }
+    };
+
 
     return (
         <main className="pt-32 pb-20 overflow-hidden flex-grow">
@@ -163,7 +199,10 @@ export default function LandingPage() {
 
                                     {/* Hover Download Overlay */}
                                     <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                        <button className="bg-white text-slate-900 px-4 py-2 rounded-lg text-xs font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleDownload('desktop')}
+                                            className="bg-white text-slate-900 px-4 py-2 rounded-lg text-xs font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2"
+                                        >
                                             <Download size={16} /> Download Image
                                         </button>
                                     </div>
@@ -174,7 +213,7 @@ export default function LandingPage() {
                         {/* Mobile Frame */}
                         <div className={clsx("relative w-[280px] transition-all duration-500 transform", device === 'desktop' && "hidden")}>
                             <div className="bg-slate-900 rounded-[3rem] p-3 shadow-2xl ring-1 ring-slate-900/5">
-                                <div className="bg-white rounded-[2.25rem] overflow-hidden relative aspect-[9/19] group">
+                                <div className="bg-white rounded-[2.25rem] overflow-hidden relative aspect-[390/844] group">
                                     {/* Notch */}
                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-xl z-20"></div>
 
@@ -186,7 +225,10 @@ export default function LandingPage() {
 
                                     {/* Hover Download Overlay */}
                                     <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 z-30">
-                                        <button className="bg-white text-slate-900 px-4 py-2 rounded-lg text-xs font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleDownload('mobile')}
+                                            className="bg-white text-slate-900 px-4 py-2 rounded-lg text-xs font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2"
+                                        >
                                             <Download size={16} /> Download
                                         </button>
                                     </div>

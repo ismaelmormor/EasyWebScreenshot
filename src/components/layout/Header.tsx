@@ -1,12 +1,33 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Camera } from 'lucide-react';
+import { Camera, LayoutDashboard } from 'lucide-react';
 import clsx from 'clsx';
+import { createClient } from '@/utils/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 export function Header() {
     const pathname = usePathname();
+    const [user, setUser] = useState<User | null>(null);
+    // Create client once
+    const [supabase] = useState(() => createClient());
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+
+        getUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, [supabase]);
 
     const isActive = (path: string) => pathname === path;
 
@@ -44,10 +65,22 @@ export function Header() {
                 </nav>
 
                 <div className="flex items-center gap-4">
-                    <Link href="#" className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900">Sign in</Link>
-                    <Link href="#" className="bg-slate-900 text-white text-xs font-medium px-4 py-2 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10">
-                        Get API Key
-                    </Link>
+                    {user ? (
+                        <Link
+                            href="/dashboard"
+                            className="bg-slate-900 text-white text-xs font-medium px-4 py-2 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2"
+                        >
+                            <LayoutDashboard size={14} />
+                            Dashboard
+                        </Link>
+                    ) : (
+                        <>
+                            <Link href="/login" className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900">Sign in</Link>
+                            <Link href="/login?view=sign-up" className="bg-slate-900 text-white text-xs font-medium px-4 py-2 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10">
+                                Get API Key
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
         </header>

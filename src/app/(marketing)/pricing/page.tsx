@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { CheckCircle, Star, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import Link from 'next/link';
+import { createCheckoutSession } from '@/modules/stripe/actions';
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     const prices = {
         hobby: 0,
-        pro: billingCycle === 'monthly' ? 19 : 15,
+        pro: billingCycle === 'monthly' ? 9 : 7,
         business: billingCycle === 'monthly' ? 49 : 39
     };
 
@@ -112,9 +113,13 @@ export default function PricingPage() {
                             <span className="text-4xl font-semibold tracking-tight text-slate-900">${prices.pro}</span>
                             <span className="text-slate-400 text-sm">/mo</span>
                         </div>
-                        <Link href="#" className="block w-full py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium text-center hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all mb-8">
-                            Get Pro API Key
-                        </Link>
+                        <form action={async () => {
+                            await createCheckoutSession('price_1SzciZLH9nOoVyuzkOLl7pDn');
+                        }}>
+                            <button type="submit" className="block w-full py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium text-center hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all mb-8">
+                                Get Pro API Key
+                            </button>
+                        </form>
 
                         <ul className="space-y-4">
                             <li className="flex items-center gap-3 text-sm text-slate-900 font-medium">
